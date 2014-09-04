@@ -10,14 +10,15 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
+import java.util.HashMap;
 import java.util.Iterator;
 
 public class G2E_Demo implements ApplicationListener, InputProcessor {
     private OrthographicCamera camera;
     private SpriteBatch batch;
-    private Array<FingerPoint> FingerPoints;
+    private HashMap<Integer, FingerPoint> FingerPoints;
 
     public class FingerPoint {
         private ShapeRenderer shapeRenderer;
@@ -26,12 +27,15 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         private float radius;
         private int pointerIndex;
 
+        private final Color colors[] = {Color.WHITE, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW,
+                                            Color.ORANGE, Color.PINK, Color.PURPLE, Color.CYAN, Color.OLIVE};
+
         public FingerPoint(float x, float y, int pointer) {
             shapeRenderer = new ShapeRenderer();
             xPos = x;
             yPos = y;
             pointerIndex = pointer;
-            radius = 25.0f;
+            radius = 20.0f;
         }
 
         public void draw(Batch batch) {
@@ -39,7 +43,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            shapeRenderer.setColor(Color.WHITE);
+            shapeRenderer.setColor(colors[pointerIndex]);
             shapeRenderer.circle(this.xPos, this.yPos, this.radius, 100);
             shapeRenderer.end();
             Gdx.gl.glDisable(GL20.GL_BLEND);
@@ -63,23 +67,23 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         camera.setToOrtho(true, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         batch = new SpriteBatch();
 
-        FingerPoints = new Array<FingerPoint>(10);
+        FingerPoints = new HashMap<Integer, FingerPoint>();
     }
 
     @Override
     public void render () {
         float deltaTime = Gdx.graphics.getDeltaTime();
-        Gdx.gl.glClearColor(0,0,0.2f,1);
+        Gdx.gl.glClearColor(0,0,0,1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
         batch.begin();
-        Iterator<FingerPoint> fpItr = FingerPoints.iterator();
-        while(fpItr.hasNext()) {
-            FingerPoint fp = fpItr.next();
-            fp.draw(batch);
+        for(int i = 0; i < 10; i++) {
+            if(FingerPoints.containsKey(i)) {
+                FingerPoints.get(i).draw(batch);
+            }
         }
         batch.end();
     }
@@ -106,9 +110,17 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
-        if ((keycode == Input.Keys.ESCAPE) || (keycode == Input.Keys.BACK))
-            Gdx.app.exit();
-        return false;
+        switch (keycode) {
+            case Input.Keys.ESCAPE:
+            case Input.Keys.BACK:
+                Gdx.app.exit();
+                return true;
+            case Input.Keys.A:
+                FingerPoints.clear();
+                return true;
+            default:
+                return false;
+        }
     }
 
     @Override
@@ -123,16 +135,14 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        if((pointer > 0) && (pointer < 10)) {
-            Iterator<FingerPoint> fpItr = FingerPoints.iterator();
-            while (fpItr.hasNext()) {
-                FingerPoint fp = fpItr.next();
-                if (fp.getPointer() == pointer) {
-                    fp.setPos(screenX, screenY);
-                    return true;
-                }
+        if(pointer < 10) {
+            System.out.println(pointer);
+            if(FingerPoints.containsKey(pointer)) {
+                FingerPoints.get(pointer).setPos(screenX, screenY);
             }
-            FingerPoints.add(new FingerPoint(screenX, screenY, pointer));
+            else {
+                FingerPoints.put(pointer, new FingerPoint(screenX, screenY, pointer));
+            }
             return true;
         }
         return false;
@@ -145,16 +155,13 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-        if((pointer > 0) && (pointer < 10)) {
-            Iterator<FingerPoint> fpItr = FingerPoints.iterator();
-            while (fpItr.hasNext()) {
-                FingerPoint fp = fpItr.next();
-                if (fp.getPointer() == pointer) {
-                    fp.setPos(screenX, screenY);
-                    return true;
-                }
+        if(pointer < 10) {
+            if(FingerPoints.containsKey(pointer)) {
+                FingerPoints.get(pointer).setPos(screenX, screenY);
             }
-            FingerPoints.add(new FingerPoint(screenX, screenY, pointer));
+            else {
+                FingerPoints.put(pointer, new FingerPoint(screenX, screenY, pointer));
+            }
             return true;
         }
         return false;
