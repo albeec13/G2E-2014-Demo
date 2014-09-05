@@ -90,7 +90,7 @@ public class FingerPoint {
         xPos = x;
         yPos = y;
 
-        body.setTransform(PixelsToMeters(xPos), PixelsToMeters(yPos), body.getAngle());
+        body.setTransform(PixelsToMeters(xPos), PixelsToMeters(yPos), 0f);
         body.setLinearVelocity(PixelsToMeters(xPos - xPosPrev)/delta, PixelsToMeters(yPos - yPosPrev)/delta);
     }
 
@@ -101,6 +101,7 @@ public class FingerPoint {
     public void freeze() {
         body.setActive(false);
         body.setLinearVelocity(0f,0f);
+        body.setAngularVelocity(0f);
     }
 
     public void unFreeze() {
