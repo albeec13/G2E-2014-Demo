@@ -61,3 +61,6 @@ build/
 
 ## OS Specific
 .DS_Store
+
+android/assets/Thumbs.db
+android/Thumbs.db
