@@ -2,7 +2,6 @@ package com.wge.G2E2014.GameObjects;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -12,9 +11,6 @@ import com.badlogic.gdx.physics.box2d.*;
 import static com.wge.G2E2014.Helpers.Box2DHelper.PixelsToMeters;
 import static com.wge.G2E2014.Helpers.Box2DHelper.MetersToPixels;
 
-/**
- * Created by achaharbakhshi on 9/4/2014.
- */
 public class FingerPoint {
     private ShapeRenderer shapeRenderer;
     private float xPos;
@@ -92,10 +88,6 @@ public class FingerPoint {
 
         body.setTransform(PixelsToMeters(xPos), PixelsToMeters(yPos), 0f);
         body.setLinearVelocity(PixelsToMeters(xPos - xPosPrev)/delta, PixelsToMeters(yPos - yPosPrev)/delta);
-    }
-
-    public int getPointer() {
-        return pointerIndex;
     }
 
     public void freeze() {

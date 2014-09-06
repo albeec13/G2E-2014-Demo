@@ -10,7 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 
-import static com.wge.G2E2014.Helpers.Box2DHelper.*;
+import static com.wge.G2E2014.Helpers.Box2DHelper.PixelsToMeters;
 
 import com.badlogic.gdx.utils.Array;
 import com.wge.G2E2014.GameObjects.*;
@@ -240,10 +240,9 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
             Array<Body> worldBodies = new Array<Body>();
             world.getBodies(worldBodies);
-            Iterator<Body> itr = worldBodies.iterator();
 
-            while(itr.hasNext()) {
-                itr.next().setAwake(true);
+            for(Body b : worldBodies) {
+                b.setAwake(true);
             }
         }
     }
