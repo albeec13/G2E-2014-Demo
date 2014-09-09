@@ -28,15 +28,15 @@ public class FingerPoint {
     private Texture shineTexture;
     private Texture logoTexture;
 
-    private final Color colors[] = {Color.WHITE, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW,
-            Color.ORANGE, Color.PINK, Color.PURPLE, Color.CYAN, Color.OLIVE};
+    private final Color colors[] = {Color.WHITE, Color.BLUE, Color.RED, Color.MAGENTA, Color.YELLOW,
+            Color.DARK_GRAY, Color.PINK, Color.PURPLE, Color.CYAN, Color.MAROON};
 
     public FingerPoint(float x, float y, int pointer, World world) {
         shapeRenderer = new ShapeRenderer();
         xPos = xPosPrev = x;
         yPos = yPosPrev = y;
         pointerIndex = pointer;
-        radius = 50.0f;
+        radius = 64.0f;
         parentWorld = world;
 
         BodyDef bDef = new BodyDef();
