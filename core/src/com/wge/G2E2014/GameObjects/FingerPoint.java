@@ -28,8 +28,16 @@ public class FingerPoint {
     private Texture shineTexture;
     private Texture logoTexture;
 
-    private final Color colors[] = {Color.WHITE, Color.BLUE, Color.RED, Color.MAGENTA, Color.YELLOW,
-            Color.DARK_GRAY, Color.PINK, Color.PURPLE, Color.CYAN, Color.MAROON};
+    private Texture stoneBaseTexture;
+    private Texture stonePatternTexture;
+    private Texture stoneShineTexture;
+    private Texture stoneCapTexture;
+    private Texture stoneCapShineTexture;
+    private Texture stoneHandleTexture;
+    private Texture stoneHandleShineTexture;
+
+    private final Color colors[] = {Color.LIGHT_GRAY, Color.BLUE, Color.RED, Color.MAGENTA, Color.YELLOW,
+            Color.DARK_GRAY, Color.PINK, Color.PURPLE, Color.CYAN, Color.GREEN};
 
     public FingerPoint(float x, float y, int pointer, World world) {
         shapeRenderer = new ShapeRenderer();
@@ -49,10 +57,13 @@ public class FingerPoint {
         CircleShape shape = new CircleShape();
         shape.setRadius(PixelsToMeters(radius));
         fDef.shape = shape;
-        fDef.restitution = 0.8f;
-        fDef.friction = 0.1f;
-        fDef.density = 1;
+        fDef.restitution = 0.9f;
+        fDef.friction = 0.8f;
+        fDef.density = 500;
+        body.setAngularDamping(0.3f);
+        body.setLinearDamping(0.9f);
         body.createFixture(fDef);
+        body.resetMassData();
 
         //add reference to this finger point object to the body, for circular reference
         body.setUserData(this);
@@ -60,31 +71,43 @@ public class FingerPoint {
         ballTexture = new Texture(Gdx.files.internal("ball_grayscale.png"));
         shineTexture = new Texture(Gdx.files.internal("ball_shine.png"));
         logoTexture = new Texture(Gdx.files.internal("ball_logo.png"));
+
+        stoneBaseTexture = new Texture(Gdx.files.internal("stone.png"));
+        stonePatternTexture = new Texture(Gdx.files.internal("stone_pattern.png"));
+        stoneShineTexture = new Texture(Gdx.files.internal("stone_shine.png"));
+        stoneCapTexture = new Texture(Gdx.files.internal("stone_cap_grayscale.png"));
+        stoneCapShineTexture = new Texture(Gdx.files.internal("stone_cap_shine.png"));
+        stoneHandleTexture = new Texture(Gdx.files.internal("stone_handle_grayscale.png"));
+        stoneHandleShineTexture = new Texture(Gdx.files.internal("stone_handle_shine.png"));
     }
 
-    public void draw(Batch batch) {
-        batch.end();
-
+    public void draw(Batch batch, boolean curlingMode) {
         //update finger point sprite based on physics position before drawing
         xPos = MetersToPixels(body.getPosition().x);
         yPos = MetersToPixels(body.getPosition().y);
 
-        /*Gdx.gl.glEnable(GL20.GL_BLEND);
-        shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(colors[pointerIndex]);
-        shapeRenderer.circle(this.xPos, this.yPos, this.radius, 100);
-        shapeRenderer.end();
-        Gdx.gl.glDisable(GL20.GL_BLEND);*/
-
-        batch.begin();
-
-        batch.setColor(colors[pointerIndex]);
         float rotation = body.getAngle() * MathUtils.radiansToDegrees;
-        batch.draw(ballTexture,  xPos - radius, yPos - radius, radius, radius, radius * 2, radius *2, 1, 1, 0f, 0, 0, 256, 256, false, false);
-        batch.setColor(Color.WHITE);
-        batch.draw(logoTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256,false, false);
-        batch.draw(shineTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius *2, 1, 1, 0f, 0, 0, 256, 256, false, false);
+
+        if(curlingMode) {
+            batch.draw(stoneBaseTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, 0f, 0, 0, 256, 256, false, false);
+            batch.draw(stonePatternTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256, false, false);
+            batch.draw(stoneShineTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, 0f, 0, 0, 256, 256, false, false);
+            batch.setColor(colors[pointerIndex]);
+            batch.draw(stoneCapTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256, false, false);
+            batch.setColor(Color.WHITE);
+            batch.draw(stoneCapShineTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, 0f, 0, 0, 256, 256, false, false);
+            batch.setColor(colors[pointerIndex]);
+            batch.draw(stoneHandleTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256, false, false);
+            batch.setColor(Color.WHITE);
+            batch.draw(stoneHandleShineTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256, false, false);
+        }
+        else {
+            batch.setColor(colors[pointerIndex]);
+            batch.draw(ballTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, 0f, 0, 0, 256, 256, false, false);
+            batch.setColor(Color.WHITE);
+            batch.draw(logoTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256, false, false);
+            batch.draw(shineTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, 0f, 0, 0, 256, 256, false, false);
+        }
     }
 
     public void setPos(float x, float y, float delta) {
@@ -107,5 +130,9 @@ public class FingerPoint {
     public void unFreeze() {
         body.setActive(true);
         body.setAwake(true);
+    }
+
+    public void dispose() {
+        parentWorld.destroyBody(body);
     }
 }

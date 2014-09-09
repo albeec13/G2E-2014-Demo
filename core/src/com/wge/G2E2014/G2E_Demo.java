@@ -4,6 +4,7 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
@@ -16,6 +17,7 @@ import com.badlogic.gdx.utils.Array;
 import com.wge.G2E2014.GameObjects.*;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class G2E_Demo implements ApplicationListener, InputProcessor {
     //main Libgdx-related vars
@@ -23,6 +25,8 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
     private SpriteBatch batch;
     private World world;
     private BitmapFont font;
+    private Texture backgroundTexture;
+    //private Texture fontTexture;
 
     // box2D physics-related vars
     private Box2DDebugRenderer debugRenderer;
@@ -30,13 +34,17 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
     private HashMap<Integer, FingerPoint> FingerPoints;
     private static float physicsDelta = 1/45f;
     private float accumulator = 0.0f;
-    private boolean gravityOn = false;
+    private boolean gravityOn;
+    private Body wallBody;
 
     //touch-related vars
     private Vector3 touchVector;
     private int fingersOnScreen = 0;
     private int pointerOffset = 0;
     private int lastPointer = 0;
+
+    //mode
+    boolean curlingMode = false;
 
     @Override
     public void create () {
@@ -49,13 +57,15 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         camera = new OrthographicCamera(width, height);
         camera.setToOrtho(false, width, height);
         batch = new SpriteBatch();
-        font = new BitmapFont();
+        //fontTexture = new Texture(Gdx.files.internal("Candara.fnt"));
+        font = new BitmapFont(Gdx.files.internal("Candara.fnt"));
         font.setColor(Color.WHITE);
-        font.setScale(2,2);
+        font.setScale(1f,1f);
+        backgroundTexture = new Texture(Gdx.files.internal("curling_sheet.png"));
 
         //create box2d world, renderer, camera, and bounding box
         world = new World(new Vector2(0, 0), true);
-        gravityOn = false;
+        toggleGravity(true);
         debugRenderer = new Box2DDebugRenderer();
         b2dCamera = new OrthographicCamera(PixelsToMeters(width), PixelsToMeters(height));
         b2dCamera.setToOrtho(false, PixelsToMeters(width), PixelsToMeters(height));
@@ -63,7 +73,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         BodyDef wallBodyDef = new BodyDef();
         wallBodyDef.position.set(PixelsToMeters(0), PixelsToMeters(0));
         wallBodyDef.type = BodyDef.BodyType.StaticBody;
-        Body wallBody = world.createBody(wallBodyDef);
+        wallBody = world.createBody(wallBodyDef);
 
         EdgeShape wallShape = new EdgeShape();
         FixtureDef wallFixtureDef = new FixtureDef();
@@ -85,6 +95,8 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         wallShape.set(new Vector2(PixelsToMeters(width), PixelsToMeters(0)), new Vector2(PixelsToMeters(0), PixelsToMeters(0)));
         wallBody.createFixture(wallFixtureDef);
 
+        wallBody.setActive(!curlingMode);
+
         //create touch point tracking hash map and vector for tracking incoming touches
         touchVector = new Vector3();
         FingerPoints = new HashMap<Integer, FingerPoint>();
@@ -101,17 +113,21 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         batch.setProjectionMatrix(camera.combined);
 
         batch.begin();
+
+        if(curlingMode)
+            batch.draw(backgroundTexture,0,0,Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),0,0,1280,800,false,false);
+
         for(int i = 0; i < 10; i++) {
             if(FingerPoints.containsKey(i)) {
-                FingerPoints.get(i).draw(batch);
+                FingerPoints.get(i).draw(batch, curlingMode);
             }
         }
 
         //font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 20);
         //font.draw(batch, "Gravity Enabled: " + gravityOn, Gdx.graphics.getWidth() - 300, Gdx.graphics.getHeight() - 20);
 
-        font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight()/2);
-        font.draw(batch, "Gravity Enabled: " + gravityOn, Gdx.graphics.getWidth() - 300, Gdx.graphics.getHeight()/2);
+        font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 50);
+        //font.draw(batch, "Gravity Enabled: " + gravityOn, Gdx.graphics.getWidth() - 300, Gdx.graphics.getHeight() -50);
         batch.end();
 
         //update (and render debug for) box2d physics
@@ -155,11 +171,12 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
                 Gdx.app.exit();
                 return true;
             case Input.Keys.A:
-                //FingerPoints.clear();
-                toggleGravity();
-                return true;
             case Input.Keys.MENU:
-                toggleGravity();
+                /*for(Map.Entry<Integer, FingerPoint> f : FingerPoints.entrySet()) {
+                    f.getValue().dispose();
+                }
+                FingerPoints.clear();*/
+                toggleCurlingMode();
                 return true;
             default:
                 return false;
@@ -186,7 +203,12 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             updateFingerPoints(screenX, screenY, getPointerOffset(pointer));
 
             //freeze physics on finger down
-            FingerPoints.get(getPointerOffset(pointer)).freeze();
+            try {
+                FingerPoints.get(getPointerOffset(pointer)).freeze();
+            }
+            catch (Exception ex) {
+                System.out.println(ex);
+            }
             return true;
         }
         return false;
@@ -198,7 +220,12 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             fingersOnScreen--;
 
             //unfreeze physics on finger up
-            FingerPoints.get(getPointerOffset(pointer)).unFreeze();
+            try {
+                FingerPoints.get(getPointerOffset(pointer)).unFreeze();
+            }
+            catch(Exception ex) {
+                System.out.println(ex);
+            }
 
             if(fingersOnScreen == 0) {
                 pointerOffset = lastPointer;
@@ -237,12 +264,12 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         }
         else {
             FingerPoints.put(pointer, new FingerPoint(touchVector.x, touchVector.y, pointer, world));
-            FingerPoints.get(pointer).setPos(touchVector.x, touchVector.y, Gdx.graphics.getDeltaTime());
+            //FingerPoints.get(pointer).setPos(touchVector.x, touchVector.y, Gdx.graphics.getDeltaTime());
         }
     }
 
-    private void toggleGravity() {
-        if(gravityOn) {
+    private void toggleGravity(boolean active) {
+        if(!active) {
             world.setGravity(new Vector2(0f, 0f));
             gravityOn = false;
         }
@@ -257,6 +284,19 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
                 b.setAwake(true);
             }
         }
+    }
+
+    private void toggleCurlingMode() {
+        curlingMode = !curlingMode;
+
+        toggleGravity(!curlingMode);
+
+        wallBody.setActive(!curlingMode);
+
+        if(curlingMode)
+            font.setColor(Color.BLACK);
+        else
+            font.setColor(Color.WHITE);
     }
 
     private int getPointerOffset(int pointer) {
