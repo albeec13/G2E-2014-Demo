@@ -16,21 +16,27 @@ import com.badlogic.gdx.utils.Array;
 import com.wge.G2E2014.GameObjects.*;
 
 import java.util.HashMap;
-import java.util.Iterator;
 
 public class G2E_Demo implements ApplicationListener, InputProcessor {
+    //main Libgdx-related vars
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private World world;
+    private BitmapFont font;
+
+    // box2D physics-related vars
     private Box2DDebugRenderer debugRenderer;
     private OrthographicCamera b2dCamera;
     private HashMap<Integer, FingerPoint> FingerPoints;
-    private boolean gravityOn = false;
-    private Vector3 touchVector;
-    private float accumulator = 0.0f;
     private static float physicsDelta = 1/45f;
-    private BitmapFont font;
+    private float accumulator = 0.0f;
+    private boolean gravityOn = false;
+
+    //touch-related vars
+    private Vector3 touchVector;
     private int fingersOnScreen = 0;
+    private int pointerOffset = 0;
+    private int lastPointer = 0;
 
     @Override
     public void create () {
@@ -175,10 +181,12 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         if(pointer < 10) {
             fingersOnScreen++;
 
-            updateFingerPoints(screenX, screenY, pointer);
+            lastPointer = (lastPointer + 1) % 10;
+
+            updateFingerPoints(screenX, screenY, getPointerOffset(pointer));
 
             //freeze physics on finger down
-            FingerPoints.get(pointer).freeze();
+            FingerPoints.get(getPointerOffset(pointer)).freeze();
             return true;
         }
         return false;
@@ -190,7 +198,11 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             fingersOnScreen--;
 
             //unfreeze physics on finger up
-            FingerPoints.get(pointer).unFreeze();
+            FingerPoints.get(getPointerOffset(pointer)).unFreeze();
+
+            if(fingersOnScreen == 0) {
+                pointerOffset = lastPointer;
+            }
             return true;
         }
         return false;
@@ -199,7 +211,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
         if(pointer < 10) {
-            updateFingerPoints(screenX, screenY, pointer);
+            updateFingerPoints(screenX, screenY, getPointerOffset(pointer));
             return true;
         }
         return false;
@@ -245,5 +257,9 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
                 b.setAwake(true);
             }
         }
+    }
+
+    private int getPointerOffset(int pointer) {
+        return ((pointer + pointerOffset) % 10);
     }
 }

@@ -2,6 +2,7 @@ package com.wge.G2E2014.GameObjects;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -23,7 +24,9 @@ public class FingerPoint {
     private World parentWorld;
     private Body body;
 
-    private Texture texture;
+    private Texture ballTexture;
+    private Texture shineTexture;
+    private Texture logoTexture;
 
     private final Color colors[] = {Color.WHITE, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW,
             Color.ORANGE, Color.PINK, Color.PURPLE, Color.CYAN, Color.OLIVE};
@@ -54,7 +57,9 @@ public class FingerPoint {
         //add reference to this finger point object to the body, for circular reference
         body.setUserData(this);
 
-        texture = new Texture(Gdx.files.internal("Pokeball.png"));
+        ballTexture = new Texture(Gdx.files.internal("ball_grayscale.png"));
+        shineTexture = new Texture(Gdx.files.internal("ball_shine.png"));
+        logoTexture = new Texture(Gdx.files.internal("ball_logo.png"));
     }
 
     public void draw(Batch batch) {
@@ -74,9 +79,12 @@ public class FingerPoint {
 
         batch.begin();
 
+        batch.setColor(colors[pointerIndex]);
         float rotation = body.getAngle() * MathUtils.radiansToDegrees;
-        batch.draw(texture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256,false, false);
-        //batch.draw(texture, body.getPosition().x, body.getPosition().y, xPos, yPos, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256,false, false);
+        batch.draw(ballTexture,  xPos - radius, yPos - radius, radius, radius, radius * 2, radius *2, 1, 1, 0f, 0, 0, 256, 256, false, false);
+        batch.setColor(Color.WHITE);
+        batch.draw(logoTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius * 2, 1, 1, rotation, 0, 0, 256, 256,false, false);
+        batch.draw(shineTexture, xPos - radius, yPos - radius, radius, radius, radius * 2, radius *2, 1, 1, 0f, 0, 0, 256, 256, false, false);
     }
 
     public void setPos(float x, float y, float delta) {
