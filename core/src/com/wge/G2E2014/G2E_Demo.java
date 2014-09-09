@@ -126,7 +126,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         //font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 20);
         //font.draw(batch, "Gravity Enabled: " + gravityOn, Gdx.graphics.getWidth() - 300, Gdx.graphics.getHeight() - 20);
 
-        font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 50);
+        font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 100);
         //font.draw(batch, "Gravity Enabled: " + gravityOn, Gdx.graphics.getWidth() - 300, Gdx.graphics.getHeight() -50);
         batch.end();
 
