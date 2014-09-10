@@ -2,10 +2,8 @@ package com.wge.G2E2014.GameObjects;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.*;
 
@@ -13,7 +11,6 @@ import static com.wge.G2E2014.Helpers.Box2DHelper.PixelsToMeters;
 import static com.wge.G2E2014.Helpers.Box2DHelper.MetersToPixels;
 
 public class FingerPoint {
-    private ShapeRenderer shapeRenderer;
     private float xPos;
     private float yPos;
     private float xPosPrev;
@@ -40,7 +37,6 @@ public class FingerPoint {
             Color.DARK_GRAY, Color.PINK, Color.PURPLE, Color.CYAN, Color.GREEN};
 
     public FingerPoint(float x, float y, int pointer, World world) {
-        shapeRenderer = new ShapeRenderer();
         xPos = xPosPrev = x;
         yPos = yPosPrev = y;
         pointerIndex = pointer;

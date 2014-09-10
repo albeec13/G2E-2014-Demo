@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
@@ -15,18 +16,21 @@ import static com.wge.G2E2014.Helpers.Box2DHelper.PixelsToMeters;
 
 import com.badlogic.gdx.utils.Array;
 import com.wge.G2E2014.GameObjects.*;
+import com.wge.G2E2014.Helpers.Platform;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class G2E_Demo implements ApplicationListener, InputProcessor {
+    //one-off debug APK for media player with non-functional portrait mode
+    private static final boolean DEBUG = false;
+
     //main Libgdx-related vars
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private World world;
     private BitmapFont font;
     private Texture backgroundTexture;
-    //private Texture fontTexture;
+    private TextureRegion backgroundTextureRegion;
 
     // box2D physics-related vars
     private Box2DDebugRenderer debugRenderer;
@@ -46,6 +50,13 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
     //mode
     boolean curlingMode = false;
 
+    //platform-specific accessor
+    private Platform platform;
+
+    public G2E_Demo(Platform platform){
+        this.platform = platform;
+    }
+
     @Override
     public void create () {
         Gdx.input.setInputProcessor(this);
@@ -57,11 +68,11 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         camera = new OrthographicCamera(width, height);
         camera.setToOrtho(false, width, height);
         batch = new SpriteBatch();
-        //fontTexture = new Texture(Gdx.files.internal("Candara.fnt"));
-        font = new BitmapFont(Gdx.files.internal("Candara.fnt"));
+        font = new BitmapFont(Gdx.files.internal("Candara.fnt"),Gdx.files.internal("Candara.png"), false, true);
         font.setColor(Color.WHITE);
         font.setScale(1f,1f);
         backgroundTexture = new Texture(Gdx.files.internal("curling_sheet.png"));
+        backgroundTextureRegion = new TextureRegion(backgroundTexture);
 
         //create box2d world, renderer, camera, and bounding box
         world = new World(new Vector2(0, 0), true);
@@ -114,8 +125,12 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
         batch.begin();
 
-        if(curlingMode)
-            batch.draw(backgroundTexture,0,0,Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),0,0,1280,800,false,false);
+        if(curlingMode) {
+            if((Gdx.app.getType() == Application.ApplicationType.Android)&&(Gdx.graphics.getWidth() < Gdx.graphics.getHeight()))
+                batch.draw(backgroundTextureRegion, 0, 0, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),1, 1, 0, false);
+            else
+                batch.draw(backgroundTexture, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 0, 0, 1920, 1080, false, false);
+        }
 
         for(int i = 0; i < 10; i++) {
             if(FingerPoints.containsKey(i)) {
@@ -123,11 +138,9 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             }
         }
 
-        //font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 20);
-        //font.draw(batch, "Gravity Enabled: " + gravityOn, Gdx.graphics.getWidth() - 300, Gdx.graphics.getHeight() - 20);
+        if(!DEBUG) //remove in debug mode due to orientation on screen being wrong (too much time to fix right now)
+            font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 100);
 
-        font.draw(batch, "Fingers: " + fingersOnScreen, 20, Gdx.graphics.getHeight() - 100);
-        //font.draw(batch, "Gravity Enabled: " + gravityOn, Gdx.graphics.getWidth() - 300, Gdx.graphics.getHeight() -50);
         batch.end();
 
         //update (and render debug for) box2d physics
@@ -142,7 +155,8 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
     @Override
     public void resize (int width, int height) {
-
+        b2dCamera.setToOrtho(false, PixelsToMeters(width), PixelsToMeters(height));
+        camera.setToOrtho(false, width, height);
     }
 
     @Override
@@ -161,6 +175,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         font.dispose();
         FingerPoints.clear();
         world.dispose();
+        backgroundTexture.dispose();
     }
 
     @Override
@@ -230,6 +245,13 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             if(fingersOnScreen == 0) {
                 pointerOffset = lastPointer;
             }
+
+            if(DEBUG) {
+                if((screenX < 50)&&(screenY < 50)) {
+                    toggleCurlingMode();
+                }
+            }
+
             return true;
         }
         return false;
@@ -274,7 +296,10 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             gravityOn = false;
         }
         else {
-            world.setGravity(new Vector2(0f, -9.8f));
+            if(DEBUG)
+                world.setGravity(new Vector2(-9.8f, 0f));
+            else
+                world.setGravity(new Vector2(0f, -9.8f));
             gravityOn = true;
 
             Array<Body> worldBodies = new Array<Body>();
@@ -302,4 +327,11 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
     private int getPointerOffset(int pointer) {
         return ((pointer + pointerOffset) % 10);
     }
+
+    /*private void toggleOrientation() {
+        if(platform.GetOrientation() == "portrait")
+            platform.SetOrientation("landscape");
+        else if(platform.GetOrientation() == "landscape")
+            platform.SetOrientation("portrait");
+    }*/
 }
