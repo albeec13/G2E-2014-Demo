@@ -8,10 +8,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
 
+import static com.wge.G2E2014.Helpers.Box2DHelper.MetersToPixels;
 import static com.wge.G2E2014.Helpers.Box2DHelper.PixelsToMeters;
 
 import com.badlogic.gdx.utils.Array;
@@ -31,11 +33,14 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
     private BitmapFont font;
     private Texture backgroundTexture;
     private TextureRegion backgroundTextureRegion;
+    private Texture wgLogoTexture;
+    private TextureRegion wgLogoTextureRegion;
 
     // box2D physics-related vars
     private Box2DDebugRenderer debugRenderer;
     private OrthographicCamera b2dCamera;
     private HashMap<Integer, FingerPoint> FingerPoints;
+    private Array<Peg> Pegs;
     private static float physicsDelta = 1/45f;
     private float accumulator = 0.0f;
     private boolean gravityOn;
@@ -64,7 +69,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         int height = Gdx.graphics.getHeight();
         int width = Gdx.graphics.getWidth();
 
-        //set game camera, spritebatch, and font
+        //set game camera, spritebatch, font, and backgrounds
         camera = new OrthographicCamera(width, height);
         camera.setToOrtho(false, width, height);
         batch = new SpriteBatch();
@@ -73,6 +78,8 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         font.setScale(1f,1f);
         backgroundTexture = new Texture(Gdx.files.internal("curling_sheet.png"));
         backgroundTextureRegion = new TextureRegion(backgroundTexture);
+        wgLogoTexture = new Texture(Gdx.files.internal("wg_logo.png"));
+        wgLogoTextureRegion = new TextureRegion(wgLogoTexture);
 
         //create box2d world, renderer, camera, and bounding box
         world = new World(new Vector2(0, 0), true);
@@ -80,10 +87,57 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         debugRenderer = new Box2DDebugRenderer();
         b2dCamera = new OrthographicCamera(PixelsToMeters(width), PixelsToMeters(height));
         b2dCamera.setToOrtho(false, PixelsToMeters(width), PixelsToMeters(height));
+        RecreateBoundingWall();
+
+        //create touch point tracking hash map and vector for tracking incoming touches
+        touchVector = new Vector3();
+        FingerPoints = new HashMap<Integer, FingerPoint>();
+
+        //create pegs for falling balls to bounce off of
+        RecreatePegs();
+    }
+
+    private void RecreatePegs() {
+        int height = Gdx.graphics.getHeight();
+        int width = Gdx.graphics.getWidth();
+
+        if(Pegs != null) {
+            for(Peg p : Pegs) {
+                p.dispose();
+            }
+            Pegs.clear();
+        }
+
+        Pegs = new Array<Peg>();
+
+        if(DEBUG) {
+            for(int i = 1; i <= 5; i =  i + 1) {
+                Pegs.add(new Peg(width / 4 * (1 + i % 2), height / 6 * i, world));
+            }
+        }
+        else if(width > height) {
+            for(int i = 1; i <= 9; i =  i + 1) {
+                Pegs.add(new Peg(width / 10 * i, height / 3 * (1 + i % 2), world));
+            }
+        }
+        else {
+            for(int i = 1; i <= 5; i =  i + 1) {
+                Pegs.add(new Peg(width / 6 * i, height / 4 * (1 + i % 2), world));
+            }
+        }
+    }
+
+    private void RecreateBoundingWall() {
+        int height = Gdx.graphics.getHeight();
+        int width = Gdx.graphics.getWidth();
 
         BodyDef wallBodyDef = new BodyDef();
         wallBodyDef.position.set(PixelsToMeters(0), PixelsToMeters(0));
         wallBodyDef.type = BodyDef.BodyType.StaticBody;
+
+        if(wallBody != null)
+            world.destroyBody(wallBody);
+
         wallBody = world.createBody(wallBodyDef);
 
         EdgeShape wallShape = new EdgeShape();
@@ -107,10 +161,6 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         wallBody.createFixture(wallFixtureDef);
 
         wallBody.setActive(!curlingMode);
-
-        //create touch point tracking hash map and vector for tracking incoming touches
-        touchVector = new Vector3();
-        FingerPoints = new HashMap<Integer, FingerPoint>();
     }
 
     @Override
@@ -131,11 +181,22 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
             else
                 batch.draw(backgroundTexture, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), 0, 0, 1920, 1080, false, false);
         }
+        else {
+            if(DEBUG)
+                batch.draw(wgLogoTextureRegion, Gdx.graphics.getWidth() / 2 - 128, Gdx.graphics.getHeight() / 2 - 256, 0, 0, 256, 512, 1, 1, 0, true);
+            else
+                batch.draw(wgLogoTexture, Gdx.graphics.getWidth() / 2 - 256, Gdx.graphics.getHeight() / 2 - 128, 512, 256, 0, 0, 512, 256, false, false);
+        }
+
 
         for(int i = 0; i < 10; i++) {
             if(FingerPoints.containsKey(i)) {
                 FingerPoints.get(i).draw(batch, curlingMode);
             }
+        }
+
+        for(Peg p : Pegs) {
+            p.draw(batch);
         }
 
         if(!DEBUG) //remove in debug mode due to orientation on screen being wrong (too much time to fix right now)
@@ -157,6 +218,8 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
     public void resize (int width, int height) {
         b2dCamera.setToOrtho(false, PixelsToMeters(width), PixelsToMeters(height));
         camera.setToOrtho(false, width, height);
+        RecreateBoundingWall();
+        RecreatePegs();
     }
 
     @Override
@@ -317,6 +380,10 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         toggleGravity(!curlingMode);
 
         wallBody.setActive(!curlingMode);
+
+        for(Peg p : Pegs) {
+            p.hide(curlingMode);
+        }
 
         if(curlingMode)
             font.setColor(Color.BLACK);

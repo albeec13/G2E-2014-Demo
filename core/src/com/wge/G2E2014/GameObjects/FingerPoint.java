@@ -126,6 +126,7 @@ public class FingerPoint {
     public void unFreeze() {
         body.setActive(true);
         body.setAwake(true);
+        body.setAngularVelocity(-0.3f); //slightly less jarring initial release, adds small rotation
     }
 
     public void dispose() {
