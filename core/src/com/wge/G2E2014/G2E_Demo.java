@@ -191,7 +191,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
         for(int i = 0; i < 10; i++) {
             if(FingerPoints.containsKey(i)) {
-                FingerPoints.get(i).draw(batch, curlingMode);
+                FingerPoints.get(i).draw(batch, curlingMode, deltaTime);
             }
         }
 
@@ -345,7 +345,7 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
         camera.unproject(touchVector);
 
         if(FingerPoints.containsKey(pointer)) {
-            FingerPoints.get(pointer).setPos(touchVector.x, touchVector.y, Gdx.graphics.getDeltaTime());
+            FingerPoints.get(pointer).setPos(touchVector.x, touchVector.y);
         }
         else {
             FingerPoints.put(pointer, new FingerPoint(touchVector.x, touchVector.y, pointer, world));

@@ -15,6 +15,7 @@ public class FingerPoint {
     private float yPos;
     private float xPosPrev;
     private float yPosPrev;
+    private float deltaTot;
     private float radius;
     private int pointerIndex;
 
@@ -39,6 +40,7 @@ public class FingerPoint {
     public FingerPoint(float x, float y, int pointer, World world) {
         xPos = xPosPrev = x;
         yPos = yPosPrev = y;
+        deltaTot = 1/60f; //starting val to prevent ball flying off at high speed
         pointerIndex = pointer;
         radius = 64.0f;
         parentWorld = world;
@@ -77,10 +79,11 @@ public class FingerPoint {
         stoneHandleShineTexture = new Texture(Gdx.files.internal("stone_handle_shine.png"));
     }
 
-    public void draw(Batch batch, boolean curlingMode) {
+    public void draw(Batch batch, boolean curlingMode, float delta) {
         //update finger point sprite based on physics position before drawing
         xPos = MetersToPixels(body.getPosition().x);
         yPos = MetersToPixels(body.getPosition().y);
+        deltaTot += delta;
 
         float rotation = body.getAngle() * MathUtils.radiansToDegrees;
 
@@ -106,30 +109,39 @@ public class FingerPoint {
         }
     }
 
-    public void setPos(float x, float y, float delta) {
-        xPosPrev = xPos;
-        yPosPrev = yPos;
-
+    public void setPos(float x, float y) {
         xPos = x;
         yPos = y;
 
         body.setTransform(PixelsToMeters(xPos), PixelsToMeters(yPos), 0f);
-        body.setLinearVelocity(PixelsToMeters(xPos - xPosPrev)/delta, PixelsToMeters(yPos - yPosPrev)/delta);
     }
 
     public void freeze() {
         body.setActive(false);
-        body.setLinearVelocity(0f,0f);
-        body.setAngularVelocity(0f);
+        setStartPos();
     }
 
     public void unFreeze() {
+        setEndPos();
         body.setActive(true);
         body.setAwake(true);
-        body.setAngularVelocity(-0.3f); //slightly less jarring initial release, adds small rotation
     }
 
     public void dispose() {
         parentWorld.destroyBody(body);
+    }
+
+    private void setStartPos() {
+        xPosPrev = xPos;
+        yPosPrev = yPos;
+        deltaTot = 1/60f;
+        body.setLinearVelocity(0f,0f);
+        body.setAngularVelocity(0f);
+    }
+
+    private void setEndPos() {
+        body.setLinearVelocity(PixelsToMeters(xPos - xPosPrev)/deltaTot, PixelsToMeters(yPos - yPosPrev)/deltaTot);
+        body.setAngularVelocity(-0.3f); //slightly less jarring initial release, adds small rotation
+        deltaTot = 1/60f;
     }
 }
