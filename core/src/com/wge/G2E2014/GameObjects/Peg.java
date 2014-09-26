@@ -19,7 +19,7 @@ public class Peg {
     private boolean hidden = false;
     private ShapeRenderer shapeRenderer;
 
-    public Peg(float x, float y, World world) {
+    public Peg(float x, float y, World world, boolean StartHidden) {
         xPos = x;
         yPos = y;
         parentWorld = world;
@@ -40,6 +40,8 @@ public class Peg {
         body.setType(BodyDef.BodyType.StaticBody);
         body.createFixture(fDef);
         body.setUserData(this);
+
+        this.hide(StartHidden);
     }
 
     public void draw(Batch batch) {

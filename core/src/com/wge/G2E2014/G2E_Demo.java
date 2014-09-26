@@ -112,17 +112,17 @@ public class G2E_Demo implements ApplicationListener, InputProcessor {
 
         if(DEBUG) {
             for(int i = 1; i <= 5; i =  i + 1) {
-                Pegs.add(new Peg(width / 4 * (1 + i % 2), height / 6 * i, world));
+                Pegs.add(new Peg(width / 4 * (1 + i % 2), height / 6 * i, world, curlingMode));
             }
         }
         else if(width > height) {
             for(int i = 1; i <= 9; i =  i + 1) {
-                Pegs.add(new Peg(width / 10 * i, height / 3 * (1 + i % 2), world));
+                Pegs.add(new Peg(width / 10 * i, height / 3 * (1 + i % 2), world, curlingMode));
             }
         }
         else {
             for(int i = 1; i <= 5; i =  i + 1) {
-                Pegs.add(new Peg(width / 6 * i, height / 4 * (1 + i % 2), world));
+                Pegs.add(new Peg(width / 6 * i, height / 4 * (1 + i % 2), world, curlingMode));
             }
         }
     }
